@@ -1,0 +1,42 @@
+:root {
+    color-scheme: light dark;
+    --accent: #ff8a3d;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+    background: Canvas;
+    color: CanvasText;
+}
+
+main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 20px;
+}
+
+h1 { font-size: 2.2rem; margin-bottom: 0.2em; }
+h2 { margin-top: 2em; font-size: 1.3rem; }
+
+.tagline { font-size: 1.2rem; opacity: 0.8; }
+.updated { opacity: 0.6; font-size: 0.9rem; }
+
+.games {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+    padding: 0;
+    list-style: none;
+}
+
+.games li {
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+a { color: var(--accent); }
+
+nav { margin-top: 2em; }
