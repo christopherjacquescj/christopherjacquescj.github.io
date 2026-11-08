@@ -349,6 +349,14 @@ button { font: inherit; color: inherit; }
 .btn.coffee:hover { box-shadow: 0 6px 0 #b8860b, 0 18px 26px -8px rgba(0, 0, 0, .55); }
 .btn.coffee:active { box-shadow: 0 1px 0 #b8860b, 0 6px 12px -6px rgba(0, 0, 0, .55); }
 .btn.coffee svg { flex: none; width: 1.3em; height: 1.3em; }
+.btn.store { display: inline-flex; align-items: center; gap: .55em; }
+.btn.store svg { flex: none; width: 1.2em; height: 1.2em; }
+.btn.store:not(.soon) { background: var(--paper); color: var(--ink); }
+/* « bientôt » : on voit la place du bouton, mais il ne se clique pas */
+.btn.store.soon {
+    background: transparent; color: var(--paper); box-shadow: none; cursor: default;
+    border: 2px dashed rgba(255, 244, 214, .6); padding: calc(.78em - 2px) calc(1.35em - 2px);
+}
 
 /* ---------- pied de page ---------- */
 .foot { padding: 30px 20px calc(36px + env(safe-area-inset-bottom)); text-align: center; background: var(--felt-edge); color: rgba(255, 244, 214, .78); font-size: .95rem; }
