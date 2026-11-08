@@ -28,7 +28,7 @@ img, svg, canvas { display: block; max-width: 100%; }
 button { font: inherit; color: inherit; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 :focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; border-radius: 8px; }
-.toy :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; box-shadow: 0 0 0 2px #fff; border-radius: 6px; position: relative; z-index: 4; }
+.toy :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; box-shadow: 0 0 0 2px #fff; border-radius: 6px; z-index: 4; }
 
 /* ---------- barre du haut : café et App Store, en haut à droite ---------- */
 .top {
@@ -250,6 +250,32 @@ button { font: inherit; color: inherit; }
     100% { transform: translateY(0); }
 }
 
+/* ---------- Solitaire ---------- */
+.toy.sol { grid-column: span 2; grid-row: span 2; --bg: #1c7d52; --on: #fff4d6; background: var(--grain), radial-gradient(120% 90% at 50% 0%, #34a874 0%, #1c7d52 55%, #135c3b 100%); }
+.sol .stage { container-type: inline-size; }
+.sol .chip { z-index: 300; }
+.sol .name { padding: .45em .85em; border-radius: 999px; background: #0d2a1f; color: #fff4d6; left: calc(var(--cell) * .05); bottom: calc(var(--cell) * .045); box-shadow: 0 3px 0 rgba(0, 0, 0, .3); }
+.sol .slot { position: absolute; box-sizing: border-box; width: 12.83cqw; height: 17.7cqw; border-radius: 1.4cqw; border: .45cqw dashed rgba(255, 244, 214, .35); pointer-events: none; }
+.sol .cd, .sol .stockbtn { position: absolute; margin: 0; padding: 0; border: 0; width: 12.83cqw; height: 17.7cqw; border-radius: 1.4cqw; cursor: pointer; touch-action: manipulation; }
+.sol .cd { transition: left .26s cubic-bezier(.3, .7, .3, 1), top .26s cubic-bezier(.3, .7, .3, 1); }
+.sol .still .cd { transition: none; }
+.sol .cd.up { background: #fffdf7; color: #16251d; box-shadow: 0 .4cqw 0 rgba(0, 0, 0, .28), 0 0 0 .2cqw rgba(0, 0, 0, .08); }
+.sol .cd.up.red { color: #d63b2f; }
+.sol .cd.up[aria-disabled="true"] { cursor: default; }
+.sol .cd.dn {
+    cursor: default; box-shadow: inset 0 0 0 .55cqw #fffdf7, 0 .4cqw 0 rgba(0, 0, 0, .28);
+    background: repeating-linear-gradient(45deg, rgba(255, 255, 255, .38) 0 1.5px, transparent 1.5px 6px), repeating-linear-gradient(-45deg, rgba(255, 255, 255, .38) 0 1.5px, transparent 1.5px 6px), #2f6fe4;
+}
+.sol .cd.dn .ix, .sol .cd.dn .pip { display: none; }
+.sol .ix { position: absolute; left: 1cqw; top: .45cqw; display: flex; align-items: center; gap: .25cqw; font: 400 3.5cqw/1 var(--display); pointer-events: none; }
+.sol .ix svg { width: 3cqw; height: 3cqw; fill: currentColor; }
+.sol .pip { position: absolute; right: 1.2cqw; bottom: 1.2cqw; width: 6.6cqw; height: 6.6cqw; fill: currentColor; opacity: .92; pointer-events: none; }
+.sol .stockbtn { z-index: 90; background: transparent; display: grid; place-items: center; color: rgba(255, 244, 214, .75); }
+.sol .stockbtn svg { display: none; width: 45%; height: 45%; }
+.sol .stockbtn.empty svg { display: block; }
+.sol .mini.ic { right: auto; bottom: auto; z-index: 5; left: calc(var(--x) * 1cqw + (12.83cqw - var(--u) * .17) / 2); top: calc(1.8cqw + (17.7cqw - var(--u) * .17) / 2); }
+.sol .cd:focus-visible, .sol .stockbtn:focus-visible { z-index: 150 !important; outline-width: .7cqw; outline-offset: .35cqw; border-radius: 1.4cqw; }
+
 /* ---------- Jeu de paires ---------- */
 .toy.paires { --bg: #f2b91b; --on: #16251d; background: var(--grain), linear-gradient(#ffd24a, #eba70a); }
 .paires .deck { position: absolute; left: 4%; right: 4%; top: 8%; bottom: 25%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: 1fr 1fr; gap: calc(var(--u) * .05); place-items: center; }
@@ -312,23 +338,24 @@ button { font: inherit; color: inherit; }
 .hockey canvas { position: absolute; left: 50%; top: 6%; height: 74%; aspect-ratio: 3 / 4; transform: translateX(-50%); border-radius: calc(var(--u) * .03); box-shadow: 0 8px 12px rgba(0, 40, 70, .3); cursor: none; touch-action: pan-y; }
 
 /* ---------- Tri de billes ---------- */
-.toy.billes { --bg: #0f9d93; --on: #fff4d6; background: var(--grain), linear-gradient(#18b6ab, #0a7e77); }
-.billes .tubes { position: absolute; left: 6%; right: 6%; top: 9%; bottom: 22%; display: flex; justify-content: space-around; align-items: flex-end; }
+.toy.billes { --bg: #0f9d93; --on: #fff4d6; --d: calc(var(--u) * .14); background: var(--grain), linear-gradient(#18b6ab, #0a7e77); }
+/* la place au-dessus des tubes est voulue : la bille choisie y monte sans sortir de la tuile */
+.billes .tubes { position: absolute; left: 6%; right: 6%; top: 18.5%; display: flex; justify-content: space-around; align-items: flex-start; }
 .billes .tube {
     position: relative; display: flex; flex-direction: column-reverse; align-items: center; justify-content: flex-start; gap: calc(var(--u) * .008);
-    width: calc(var(--u) * .205); height: 100%; padding: calc(var(--u) * .012) 0; cursor: pointer;
+    width: calc(var(--u) * .18); height: calc(var(--d) * 4 + var(--u) * .062); padding: calc(var(--u) * .012) 0; cursor: pointer;
     border: calc(var(--u) * .014) solid rgba(255, 255, 255, .6); border-top: 0; border-radius: 0 0 calc(var(--u) * .1) calc(var(--u) * .1);
     background: linear-gradient(90deg, rgba(255, 255, 255, .3), rgba(255, 255, 255, .07) 40%, rgba(255, 255, 255, .17)); box-shadow: inset 0 -6px 10px rgba(0, 0, 0, .12);
 }
 .billes .tube:hover { background: linear-gradient(90deg, rgba(255, 255, 255, .4), rgba(255, 255, 255, .14) 40%, rgba(255, 255, 255, .26)); }
 .billes .ball {
-    flex: none; width: calc(var(--u) * .165); height: calc(var(--u) * .165); border-radius: 50%; transition: transform .22s cubic-bezier(.3, .8, .3, 1.3);
+    flex: none; width: var(--d); height: var(--d); border-radius: 50%; transition: transform .22s cubic-bezier(.3, .8, .3, 1.3);
     background: radial-gradient(circle at 34% 30%, var(--hi), var(--c) 55%, var(--lo)); box-shadow: 0 2px 3px rgba(0, 0, 0, .3);
 }
 .billes .ball.c0 { --hi: #ff9a90; --c: #e8473b; --lo: #8e1b14; }
 .billes .ball.c1 { --hi: #ffe9a0; --c: #ffc933; --lo: #a8740a; }
 .billes .ball.c2 { --hi: #a9c8ff; --c: #2f6fe4; --lo: #142f78; }
-.billes .ball.up { transform: translateY(calc(var(--u) * -.26)); }
+.billes .ball.up { transform: translateY(calc(var(--u) * -.17)); }
 .billes .tube.sel { background: linear-gradient(90deg, rgba(255, 255, 255, .5), rgba(255, 255, 255, .2) 40%, rgba(255, 255, 255, .34)); }
 
 /* ---------- Démineur ---------- */

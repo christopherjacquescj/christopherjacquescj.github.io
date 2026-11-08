@@ -51,6 +51,7 @@
     });
     new MutationObserver(apply).observe(root, { childList: true, subtree: true });
     apply();
+    return apply;
   }
 
   /* ---------- Mini Piano (avec du son) ---------- */
@@ -630,5 +631,135 @@
     reset(); rove(board, '.m');
   }
 
-  [piano, yams, ttt, c4, paires, dames, sudoku, mot, hockey, billes, mines].forEach(function (f) { try { f(); } catch (e) { if (window.console) console.error(e); } });
+  /* ---------- Solitaire (cartes) : on touche une carte, elle va là où elle peut ---------- */
+  function solitaire() {
+    var st = stage('sol'); if (!st) return;
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var CW = 12.83, CH = 17.7, P = 1.8, G = 1.1, FU = 4.5, FD = 1.7, Y0 = P + CH + 2.3;   // tout en « cqw » : la table est carrée
+    var SUITS = ['pique', 'cœur', 'carreau', 'trèfle'];
+    var RL = ['', 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'V', 'D', 'R'];
+    var RN = ['', 'As', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Valet', 'Dame', 'Roi'];
+    var PATH = [
+      '<path d="M12 2C9.5 6.2 3 9.7 3 14.3a4.6 4.6 0 0 0 7.5 3.6c-.2 1.6-.9 3-2.3 4.1h7.6c-1.4-1.1-2.1-2.5-2.3-4.1A4.6 4.6 0 0 0 21 14.3C21 9.7 14.5 6.2 12 2z"/>',
+      '<path d="M12 21.4l-1.5-1.3C5.4 15.4 2 12.3 2 8.5 2 5.4 4.4 3 7.5 3c1.7 0 3.4.8 4.5 2.1C13.1 3.8 14.8 3 16.5 3 19.6 3 22 5.4 22 8.5c0 3.8-3.4 6.9-8.5 11.6L12 21.4z"/>',
+      '<path d="M12 2l7.5 10L12 22 4.5 12z"/>',
+      '<circle cx="12" cy="7.3" r="4.4"/><circle cx="6.6" cy="14.8" r="4.4"/><circle cx="17.4" cy="14.8" r="4.4"/><path d="M10.8 14h2.4l1.8 8H9z"/>'
+    ];
+    function suit(s) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + PATH[s] + '</svg>'; }
+    function isRed(c) { return c.s === 1 || c.s === 2; }
+    function name(c) { return RN[c.r] + ' de ' + SUITS[c.s]; }
+    function colX(k) { return P + k * (CW + G); }
+
+    var say_ = chipper(st), cards = [], tab, stock, waste, found, over = false, lift = [], timer, s, r;
+    for (s = 0; s < 4; s++) for (r = 1; r <= 13; r++) cards.push({ s: s, r: r, up: false, el: null });
+
+    // fond : les places vides
+    var k;
+    function slot(x, y) { var d = el('div', 'slot'); d.style.left = x + 'cqw'; d.style.top = y + 'cqw'; d.setAttribute('aria-hidden', 'true'); st.appendChild(d); }
+    slot(colX(0), P); for (k = 0; k < 4; k++) slot(colX(3 + k), P); for (k = 0; k < 7; k++) slot(colX(k), Y0);
+
+    var stockBtn = el('button', 'stockbtn', '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>');
+    stockBtn.type = 'button'; stockBtn.style.left = colX(0) + 'cqw'; stockBtn.style.top = P + 'cqw'; st.appendChild(stockBtn);
+    cards.forEach(function (c) {
+      var b = el('button', 'cd dn', '<span class="ix"><b>' + RL[c.r] + '</b>' + suit(c.s) + '</span><span class="pip">' + suit(c.s) + '</span>');
+      b.type = 'button'; b._c = c; c.el = b; st.appendChild(b);
+    });
+    var again = el('button', 'mini ic', '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h3.4c1.9 0 3.1.9 4 2.4l3.2 5.2c.9 1.5 2.1 2.4 4 2.4H21"/><path d="M18.2 14.2 21 17l-2.8 2.8"/><path d="M3 17h3.4c1.9 0 3.1-.9 4-2.4M13.6 9.4c.9-1.5 2.1-2.4 4-2.4H21"/><path d="M18.2 4.2 21 7l-2.8 2.8"/></svg>');   // « mélanger » : on ne le confond pas avec la flèche de la pioche vide
+    again.type = 'button'; again.setAttribute('aria-label', 'Nouvelle donne'); again.style.setProperty('--x', colX(2)); st.appendChild(again);
+
+    function put(c, act, x, y, z, where, show) {
+      var e = c.el, li = lift.indexOf(c);
+      e.className = 'cd ' + (c.up ? 'up' + (isRed(c) ? ' red' : '') : 'dn');
+      e.style.left = x.toFixed(2) + 'cqw'; e.style.top = y.toFixed(2) + 'cqw'; e.style.zIndex = li >= 0 ? 60 + li : z;
+      if (act) { e.removeAttribute('aria-disabled'); e.setAttribute('aria-label', name(c) + (where ? ', ' + where : '')); }
+      else { e.setAttribute('aria-disabled', 'true'); e.setAttribute('aria-label', name(c) + (where ? ', ' + where : '')); }
+      if (act || show) e.removeAttribute('aria-hidden'); else e.setAttribute('aria-hidden', 'true');
+    }
+    function render() {
+      var kk, i, p, y, sd, su, f, avail, c;
+      stock.forEach(function (c, i) { put(c, 0, colX(0), P, 1 + i); });
+      waste.forEach(function (c, i) { var top = i === waste.length - 1; put(c, top, colX(1), P, 30 + i, 'défausse', top); });
+      found.forEach(function (p, kk) { p.forEach(function (c, i) { put(c, 0, colX(3 + kk), P, 100 + i, 'fondation', i === p.length - 1); }); });
+      for (kk = 0; kk < 7; kk++) {
+        p = tab[kk]; sd = 0; su = 0;
+        for (i = 0; i < p.length - 1; i++) { if (p[i].up) su++; else sd++; }
+        avail = 100 - P - Y0 - CH - sd * FD;                       // place restante pour étaler les cartes visibles
+        f = su > 0 && su * FU > avail ? Math.max(.3, avail / (su * FU)) : 1;
+        y = Y0;
+        for (i = 0; i < p.length; i++) { c = p[i]; put(c, c.up, colX(kk), y, 10 + i, 'colonne ' + (kk + 1), c.up); y += c.up ? FU * f : FD; }
+      }
+      stockBtn.classList.toggle('empty', !stock.length);
+      stockBtn.setAttribute('aria-label', stock.length ? 'Pioche, ' + stock.length + (stock.length > 1 ? ' cartes' : ' carte') : 'Pioche vide : remélanger');
+      refresh();
+    }
+
+    function deal() {
+      var all = shuffle(cards.slice()), kk;
+      clearTimeout(timer); over = false; lift = [];
+      cards.forEach(function (c) { c.up = false; });
+      tab = []; for (kk = 0; kk < 7; kk++) { tab.push(all.splice(0, kk + 1)); tab[kk][kk].up = true; }
+      stock = all; waste = []; found = [[], [], [], []];
+      say_(''); render();
+    }
+    function where(c) {
+      var kk, i;
+      for (kk = 0; kk < 7; kk++) { i = tab[kk].indexOf(c); if (i >= 0) return { z: 't', k: kk, i: i }; }
+      return { z: waste.indexOf(c) >= 0 ? 'w' : 'o' };
+    }
+    function foundOf(c) {
+      var i, p, t;
+      for (i = 0; i < 4; i++) { p = found[i]; t = p[p.length - 1]; if (t ? (t.s === c.s && t.r === c.r - 1) : c.r === 1) return i; }
+      return -1;
+    }
+    function fits(c, kk) { var p = tab[kk], t = p[p.length - 1]; return t ? (t.up && isRed(t) !== isRed(c) && t.r === c.r + 1) : c.r === 13; }
+    function take(w, run) {
+      if (w.z === 'w') { waste.pop(); return; }
+      var p = tab[w.k]; p.splice(w.i, run.length);
+      if (p.length && !p[p.length - 1].up) p[p.length - 1].up = true;
+    }
+    function moved(run, c, dest) {
+      lift = run; render();
+      setTimeout(function () { lift = []; render(); }, 340);
+      say(name(c) + ' sur ' + dest + '.');
+      if (found.every(function (p) { return p.length === 13; })) { over = true; say_('Bravo !'); say('Solitaire : gagné !'); timer = setTimeout(deal, 3800); }
+    }
+    function nope(c) {
+      if (!reduce && c.el.animate) c.el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-7%)' }, { transform: 'translateX(7%)' }, { transform: 'translateX(0)' }], { duration: 260 });
+      say_('Pas possible', 1100); say('Pas de coup possible pour ' + name(c) + '.');
+    }
+    function tap(c) {
+      if (over) return;
+      var w = where(c), run, f, kk;
+      if (w.z === 'w') { if (waste[waste.length - 1] !== c) return; run = [c]; }
+      else if (w.z === 't') { if (!c.up) return; run = tab[w.k].slice(w.i); }
+      else return;
+      if (run.length === 1 && (f = foundOf(c)) >= 0) { take(w, run); found[f].push(c); moved(run, c, 'la fondation'); return; }
+      for (kk = 0; kk < 7; kk++) {
+        if (w.z === 't' && kk === w.k) continue;
+        if (!fits(c, kk)) continue;
+        if (w.z === 't' && w.i === 0 && c.r === 13) continue;      // un roi déjà tout en haut ne bouge pas
+        take(w, run); tab[kk] = tab[kk].concat(run); moved(run, c, 'la colonne ' + (kk + 1)); return;
+      }
+      nope(c);
+    }
+    function draw() {
+      var c;
+      if (over) return;
+      if (stock.length) { c = stock.pop(); c.up = true; waste.push(c); lift = [c]; render(); setTimeout(function () { lift = []; render(); }, 340); say('Pioche : ' + name(c) + '.'); }
+      else if (waste.length) { stock = waste.reverse(); waste = []; stock.forEach(function (c) { c.up = false; }); render(); say('Pioche remélangée.'); }
+      else say_('Plus de cartes', 1100);
+    }
+    st.addEventListener('click', function (ev) {
+      var b = ev.target.closest ? ev.target.closest('button') : null;
+      if (!b || !st.contains(b)) return;
+      if (b === again) { deal(); say('Nouvelle donne.'); return; }
+      if (b === stockBtn) { draw(); return; }
+      if (b._c && b.getAttribute('aria-disabled') !== 'true') tap(b._c);
+    });
+
+    var refresh = rove(st, '.cd, .stockbtn', '[aria-disabled="true"]');
+    st.classList.add('still'); deal(); requestAnimationFrame(function () { requestAnimationFrame(function () { st.classList.remove('still'); }); });
+  }
+
+  [piano, yams, ttt, solitaire, c4, paires, dames, sudoku, mot, hockey, billes, mines].forEach(function (f) { try { f(); } catch (e) { if (window.console) console.error(e); } });
 })();
