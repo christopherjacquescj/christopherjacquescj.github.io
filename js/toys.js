@@ -520,46 +520,55 @@
   }
 
   /* ---------- Tri de billes : trie les couleurs ---------- */
+  /* Les 12 billes et les 5 tubes sont créés une seule fois, puis seulement déplacés :
+     on ne détruit ni ne redessine rien à chaque coup, donc aucune image ne peut rester affichée à tort. */
   function billes() {
     var st = stage('billes'); if (!st) return;
-    var CAP = 4, NAMES = ['rouge', 'jaune', 'bleue'], say_ = chipper(st), box = el('div', 'tubes'), tubes = [], sel = -1, done = false, timer;
+    var CAP = 4, NAMES = ['rouge', 'jaune', 'bleue'], say_ = chipper(st), box = el('div', 'tubes'), tubes = [], btns = [], balls = [], sel = -1, done = false, timer, i, c, k;
     st.appendChild(box);
-    function solved() { return tubes.every(function (t) { return !t.length || (t.length === CAP && t.every(function (c) { return c === t[0]; })); }); }
+    for (c = 0; c < 3; c++) for (k = 0; k < CAP; k++) balls.push({ c: c, el: el('span', 'ball c' + c) });
+    for (i = 0; i < 5; i++) (function (i) {
+      var b = el('button', 'tube'); b.type = 'button';
+      b.addEventListener('click', function () { pick(i); });
+      btns.push(b); box.appendChild(b);
+    })(i);
+    function top(t) { return t[t.length - 1]; }
+    function chosen(i) { return 'Tube ' + (i + 1) + ' : bille ' + NAMES[top(tubes[i]).c] + ' choisie.'; }
+    function many(n, c) { return n + (n > 1 ? ' billes ' : ' bille ') + NAMES[c] + (n > 1 ? 's' : ''); }
+    function solved() { return tubes.every(function (t) { return !t.length || (t.length === CAP && t.every(function (b) { return b.c === t[0].c; })); }); }
     function newGame() {
-      var balls = [], c, k;
-      for (c = 0; c < 3; c++) for (k = 0; k < CAP; k++) balls.push(c);
+      clearTimeout(timer);
       do {
         shuffle(balls); tubes = [[], [], [], [], []];
         balls.forEach(function (b, i) { tubes[Math.floor(i / CAP)].push(b); });
       } while (solved());
-      sel = -1; done = false; say_(''); render(false);
+      sel = -1; done = false; say_(''); render();
     }
-    function render(keepFocus) {
-      var idx = -1;
-      if (keepFocus) Array.prototype.forEach.call(box.children, function (b, i) { if (b === document.activeElement) idx = i; });
-      box.innerHTML = '';
+    function render() {
       tubes.forEach(function (t, i) {
-        var b = el('button', 'tube' + (sel === i ? ' sel' : '')); b.type = 'button';
-        b.setAttribute('aria-label', 'Tube ' + (i + 1) + ' : ' + (t.length ? t.map(function (c) { return NAMES[c]; }).join(', ') + ' (du bas vers le haut)' : 'vide') + (sel === i ? ', choisi' : ''));
-        t.forEach(function (c, j) { var ball = el('span', 'ball c' + c); if (sel === i && j === t.length - 1) ball.classList.add('up'); b.appendChild(ball); });
-        b.addEventListener('click', function () { pick(i); }); box.appendChild(b);
+        var b = btns[i], ok = b.children.length === t.length;
+        t.forEach(function (ball, j) { if (b.children[j] !== ball.el) ok = false; });
+        if (!ok) t.forEach(function (ball) { b.appendChild(ball.el); });      // on déplace les billes, on ne les refabrique jamais
+        t.forEach(function (ball, j) { ball.el.classList.toggle('up', sel === i && j === t.length - 1); });
+        b.classList.toggle('sel', sel === i);
+        b.setAttribute('aria-label', 'Tube ' + (i + 1) + ' : ' + (t.length ? t.map(function (x) { return NAMES[x.c]; }).join(', ') + ' (du bas vers le haut)' : 'vide') + (sel === i ? ', choisi' : ''));
       });
-      if (idx >= 0 && box.children[idx]) box.children[idx].focus();
     }
     function pick(i) {
+      var s, t, c, n;
       if (done) return;
-      if (sel < 0) { if (tubes[i].length) sel = i; }
-      else if (sel === i) sel = -1;
+      if (sel < 0) { if (tubes[i].length) { sel = i; say(chosen(i)); } }
+      else if (sel === i) { sel = -1; say('Choix annulé.'); }
       else {
-        var s = tubes[sel], t = tubes[i], c = s[s.length - 1];
-        if (t.length < CAP && (!t.length || t[t.length - 1] === c)) {
-          while (s.length && s[s.length - 1] === c && t.length < CAP) t.push(s.pop());
+        s = tubes[sel]; t = tubes[i]; c = top(s).c;
+        if (t.length < CAP && (!t.length || top(t).c === c)) {
+          n = 0; while (s.length && top(s).c === c && t.length < CAP) { t.push(s.pop()); n++; }
           sel = -1;
           if (solved()) { done = true; say_('Bravo !'); say('Tri de billes : réussi.'); timer = setTimeout(newGame, 2800); }
-          else say_('');
-        } else if (t.length) sel = i;
+          else { say_(''); say(many(n, c) + ' dans le tube ' + (i + 1) + '.'); }
+        } else if (t.length) { sel = i; say(chosen(i)); }
       }
-      render(true);
+      render();
     }
     newGame(); rove(box, '.tube');
   }
