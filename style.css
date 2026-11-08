@@ -30,12 +30,27 @@ button { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; border-radius: 8px; }
 .toy :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; box-shadow: 0 0 0 2px #fff; border-radius: 6px; position: relative; z-index: 4; }
 
+/* ---------- barre du haut : café et App Store, en haut à droite ---------- */
+.top {
+    position: absolute; z-index: 6; top: 0; left: 0; right: 0;
+    display: flex; justify-content: flex-end; align-items: center; gap: 10px;
+    padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 0 14px; pointer-events: none;
+}
+.top > * { pointer-events: auto; }
+.btn.sm { --py: .62em; --px: 1.05em; font-size: .92rem; white-space: nowrap; }
+.btn.sm.coffee { box-shadow: 0 3px 0 #b8860b, 0 10px 16px -8px rgba(0, 0, 0, .5); }
+.btn.sm.coffee:hover { box-shadow: 0 5px 0 #b8860b, 0 14px 20px -8px rgba(0, 0, 0, .5); }
+.btn.sm.coffee:active { box-shadow: 0 1px 0 #b8860b, 0 5px 10px -6px rgba(0, 0, 0, .5); }
+.top .short { display: none; }
+@media (max-width: 640px) { .top .coffee .long { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .top .coffee .short { display: inline; } }
+@media (max-width: 440px) { .top .store .long { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .top .store .short { display: inline; } }
+
 /* ---------- le haut : le tapis et les pièces ---------- */
 .hero {
     position: relative; isolation: isolate; overflow: hidden;
     min-height: min(94svh, 860px);
     display: flex; flex-direction: column; align-items: center;
-    padding: clamp(28px, 7vh, 72px) 20px clamp(170px, 26vh, 300px);
+    padding: clamp(56px, 7vh, 72px) 20px clamp(170px, 26vh, 300px);
     -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
 }
 .hero-copy { position: relative; z-index: 2; text-align: center; max-width: 980px; }
@@ -51,7 +66,7 @@ button { font: inherit; color: inherit; }
 .lede { margin: clamp(16px, 2.6vh, 26px) auto 0; max-width: 34ch; font-size: clamp(1.15rem, 2.6vw, 1.5rem); line-height: 1.35; text-wrap: balance; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px 14px; justify-content: center; align-items: center; margin: clamp(20px, 3.4vh, 30px) 0 0; }
 .btn {
-    display: inline-block; padding: .78em 1.35em; border-radius: 999px; text-decoration: none;
+    display: inline-block; padding: var(--py, .78em) var(--px, 1.35em); border-radius: 999px; text-decoration: none;
     background: var(--paper); color: var(--ink); font: 400 1.15rem/1 var(--display);
     box-shadow: 0 4px 0 #c4ae6f, 0 14px 22px -8px rgba(0, 0, 0, .55);
     transition: transform .15s ease, box-shadow .15s ease;
@@ -355,7 +370,7 @@ button { font: inherit; color: inherit; }
 /* « bientôt » : on voit la place du bouton, mais il ne se clique pas */
 .btn.store.soon {
     background: transparent; color: var(--paper); box-shadow: none; cursor: default;
-    border: 2px dashed rgba(255, 244, 214, .6); padding: calc(.78em - 2px) calc(1.35em - 2px);
+    border: 2px dashed rgba(255, 244, 214, .6); padding: calc(var(--py, .78em) - 2px) calc(var(--px, 1.35em) - 2px);
 }
 
 /* ---------- pied de page ---------- */
