@@ -341,10 +341,20 @@ button { font: inherit; color: inherit; }
     background: radial-gradient(circle at 35% 30%, #ffe58a, var(--yellow) 55%, #c48a00); box-shadow: 0 2px 0 rgba(0, 0, 0, .3);
 }
 
+.cta { display: flex; flex-wrap: wrap; gap: 12px 14px; margin: 26px 0 0; }
+.btn.coffee {
+    display: inline-flex; align-items: center; gap: .55em;
+    background: var(--yellow); color: var(--ink); box-shadow: 0 4px 0 #b8860b, 0 14px 22px -8px rgba(0, 0, 0, .55);
+}
+.btn.coffee:hover { box-shadow: 0 6px 0 #b8860b, 0 18px 26px -8px rgba(0, 0, 0, .55); }
+.btn.coffee:active { box-shadow: 0 1px 0 #b8860b, 0 6px 12px -6px rgba(0, 0, 0, .55); }
+.btn.coffee svg { flex: none; width: 1.3em; height: 1.3em; }
+
 /* ---------- pied de page ---------- */
 .foot { padding: 30px 20px calc(36px + env(safe-area-inset-bottom)); text-align: center; background: var(--felt-edge); color: rgba(255, 244, 214, .78); font-size: .95rem; }
 .foot a { display: inline-block; padding: .4em .2em; color: var(--paper); font-weight: 600; }
 .foot p { margin: 4px 0 0; }
+.foot .links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 22px; margin: 0; }
 
 /* ---------- pages de texte (confidentialité) : une feuille posée sur le tapis ---------- */
 body.doc { min-height: 100svh; padding: clamp(14px, 4vw, 44px) 14px calc(clamp(24px, 6vw, 64px) + env(safe-area-inset-bottom)); }
