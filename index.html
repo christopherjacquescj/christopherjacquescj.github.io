@@ -2,35 +2,100 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Le Coffre à Jeux</title>
     <meta name="description" content="Le Coffre à Jeux : 11 jeux classiques sur iPhone et iPad.">
-    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#1b6b4b">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Le Coffre à Jeux">
+    <meta property="og:description" content="11 jeux classiques réunis dans une seule app, sur iPhone et iPad.">
+    <meta property="og:image" content="https://christopherjacquescj.github.io/og.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="preload" href="fonts/paytone-one-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="style.css?v=1">
 </head>
-<body>
+<body class="home">
     <main>
-        <h1>🎲 Le Coffre à Jeux</h1>
-        <p class="tagline">11 jeux classiques réunis dans une seule app, sur iPhone et iPad.</p>
+        <section class="hero" aria-labelledby="titre">
+            <div class="hero-copy">
+                <h1 id="titre">Le Coffre<br>à Jeux</h1>
+                <p class="lede">11 jeux classiques réunis dans une seule app, sur iPhone et iPad.</p>
+                <p class="actions">
+                    <a class="btn" href="#jeux">Essayer les jeux</a>
+                    <button class="shake" type="button">Secouer le coffre</button>
+                </p>
+                <p class="tag">Gratuit, avec publicité</p>
+            </div>
+            <p class="hint" aria-hidden="true">Attrape les pièces !
+                <svg viewBox="0 0 40 40" width="26" height="26" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c10 2 16 8 14 20"/><path d="M18 22l8 6 5-9"/></svg>
+            </p>
+            <canvas id="pile" aria-hidden="true"></canvas>
+            <div class="plank" aria-hidden="true"></div>
+        </section>
 
-        <ul class="games">
-            <li>Tic Tac Toe</li>
-            <li>4 alignés</li>
-            <li>Jeu de dames</li>
-            <li>Sudoku</li>
-            <li>Mot mystère</li>
-            <li>Mini Piano</li>
-            <li>Yam's</li>
-            <li>Air Hockey</li>
-            <li>Démineur</li>
-            <li>Jeu de paires</li>
-            <li>Tri de billes</li>
-        </ul>
+        <div class="inside">
+            <section class="chest" id="jeux" aria-labelledby="t-jeux">
+                <h2 id="t-jeux">11 jeux dans un seul coffre</h2>
+                <p class="sub">Touche les jouets pour essayer. Le vrai jeu est dans l’app.</p>
+                <div class="toys-wrap">
+                    <div class="toys">
+                        <article class="toy piano w2" aria-labelledby="n-piano"><h3 class="name" id="n-piano">Mini Piano</h3><div class="stage" data-toy="piano"></div></article>
+                        <article class="toy yams" aria-labelledby="n-yams"><h3 class="name" id="n-yams">Yam’s</h3><div class="stage" data-toy="yams"></div></article>
+                        <article class="toy ttt" aria-labelledby="n-ttt"><h3 class="name" id="n-ttt">Tic Tac Toe</h3><div class="stage" data-toy="ttt"></div></article>
 
-        <p>Gratuit avec publicité. Un abonnement annuel optionnel supprime les publicités.</p>
+                        <article class="toy c4 w2" aria-labelledby="n-c4"><h3 class="name" id="n-c4">4 alignés</h3><div class="stage" data-toy="c4"></div></article>
+                        <article class="toy dames" aria-labelledby="n-dames"><h3 class="name" id="n-dames">Jeu de dames</h3><div class="stage" data-toy="dames"></div></article>
+                        <article class="toy sudoku" aria-labelledby="n-sudoku"><h3 class="name" id="n-sudoku">Sudoku</h3><div class="stage" data-toy="sudoku"></div></article>
 
-        <nav>
-            <a href="confidentialite.html">Politique de confidentialité</a>
-        </nav>
+                        <article class="toy paires w2" aria-labelledby="n-paires"><h3 class="name" id="n-paires">Jeu de paires</h3><div class="stage" data-toy="paires"></div></article>
+                        <article class="toy mot" aria-labelledby="n-mot"><h3 class="name" id="n-mot">Mot mystère</h3><div class="stage" data-toy="mot"></div></article>
+                        <article class="toy hockey" aria-labelledby="n-hockey"><h3 class="name" id="n-hockey">Air Hockey</h3><div class="stage" data-toy="hockey"></div></article>
+
+                        <article class="toy billes w2" aria-labelledby="n-billes"><h3 class="name" id="n-billes">Tri de billes</h3><div class="stage" data-toy="billes"></div></article>
+                        <article class="toy mines" aria-labelledby="n-mines"><h3 class="name" id="n-mines">Démineur</h3><div class="stage" data-toy="mines"></div></article>
+                        <article class="toy get" aria-labelledby="n-get">
+                            <div class="stage">
+                                <svg viewBox="0 0 160 120" role="img" aria-label="Un iPhone et un iPad">
+                                    <rect x="14" y="22" width="98" height="76" rx="9" fill="#101d17"/>
+                                    <rect x="18" y="26" width="90" height="68" rx="6" fill="#1b6b4b"/>
+                                    <circle cx="48" cy="60" r="9" fill="#e8473b"/><circle cx="68" cy="60" r="9" fill="#ffc933"/><circle cx="58" cy="44" r="9" fill="#2f6fe4"/>
+                                    <rect x="104" y="34" width="44" height="76" rx="9" fill="#101d17"/>
+                                    <rect x="108" y="38" width="36" height="68" rx="6" fill="#0f4a33"/>
+                                    <rect x="113" y="52" width="12" height="12" rx="3" fill="#fff4d6"/><rect x="127" y="52" width="12" height="12" rx="3" fill="#ffc933"/>
+                                    <rect x="113" y="68" width="12" height="12" rx="3" fill="#e8473b"/><rect x="127" y="68" width="12" height="12" rx="3" fill="#2f6fe4"/>
+                                </svg>
+                            </div>
+                            <h3 class="name" id="n-get">Sur iPhone et iPad</h3>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section class="free" aria-labelledby="t-free">
+                <h2 id="t-free">Gratuit</h2>
+                <div class="free-text">
+                    <p>Avec publicité. Un abonnement annuel optionnel supprime les publicités.</p>
+                    <ul class="facts">
+                        <li>Pas de compte à créer</li>
+                        <li>Tes scores et tes réglages restent sur ton appareil</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
     </main>
+
+    <footer class="foot">
+        <a href="confidentialite.html">Politique de confidentialité</a>
+        <p>Le Coffre à Jeux · éditée par Christopher Jacques</p>
+    </footer>
+
+    <p id="live" class="sr" aria-live="polite"></p>
+    <script src="vendor/matter.min.js" defer></script>
+    <script src="js/scene.js?v=1" defer></script>
+    <script src="js/toys.js?v=1" defer></script>
 </body>
 </html>
