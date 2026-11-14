@@ -131,6 +131,7 @@ button { font: inherit; color: inherit; }
     box-shadow: inset 0 2px 0 rgba(255, 255, 255, .4), inset 0 -5px 0 rgba(0, 0, 0, .2), 0 16px 24px -12px rgba(0, 0, 0, .7);
 }
 .toy.w2 { grid-column: span 2; }
+.toy.tall { grid-row: span 2; }
 .toy .stage { position: absolute; inset: 0; }
 .toy .name {
     position: absolute; left: calc(var(--cell) * .07); bottom: calc(var(--cell) * .055); z-index: 3; margin: 0; pointer-events: none;
@@ -378,6 +379,30 @@ button { font: inherit; color: inherit; }
 .mines .m.boom { background: #ff7a6d; }
 .mines .m svg { width: 72%; height: 72%; }
 .mines .mini[aria-pressed="true"] { background: var(--red); color: #fff; }
+
+/* ---------- Flipper ---------- */
+.toy.flipper { --bg: #170f33; --on: #fff4d6; background: radial-gradient(120% 70% at 50% 18%, #35207a, #170f33 60%, #0c0720); }
+.flipper canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.flipper .flip { position: absolute; bottom: 0; width: 50%; height: 46%; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.flipper .flip.l { left: 0; } .flipper .flip.r { right: 0; }
+.flipper .flip:focus-visible { outline-offset: -6px; border-radius: calc(var(--u) * .08); }
+
+/* ---------- Tour de blocs ---------- */
+.toy.tour { --bg: #2a2f6e; --on: #fff4d6; background: linear-gradient(#1c2260, #45358a 55%, #b0577e); }
+.tour .tap { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; touch-action: manipulation; }
+.tour .tap:focus-visible { outline-offset: -6px; border-radius: calc(var(--u) * .1); }
+.tour canvas { width: 100%; height: 100%; }
+
+/* ---------- Billard ---------- */
+.toy.billard { --bg: #3b2414; --on: #fff4d6; background: var(--grain), linear-gradient(#4a2e1a, #2a180c); }
+.billard canvas { position: absolute; left: 3%; top: 6%; height: 74%; aspect-ratio: 432 / 232; cursor: crosshair; touch-action: none; border-radius: calc(var(--u) * .045); box-shadow: 0 8px 12px rgba(0, 0, 0, .45); }
+.billard .pool-info { position: absolute; right: 4%; top: 9%; margin: 0; text-align: right; font: 400 calc(var(--u) * .07)/1.5 var(--display); color: var(--on); opacity: .92; }
+.billard .pool-info b { font-weight: 400; font-size: 1.6em; color: var(--yellow); }
+
+/* ---------- la vignette « Sur iPhone et iPad » ---------- */
+.toy.get .stage { display: grid; place-items: center; padding-bottom: 10%; }
+.toy.get svg { height: 82%; width: auto; aspect-ratio: 4 / 3; max-width: 100%; }
+@media (min-width: 760px) { .toy.get { grid-column: span 3; } }
 
 /* ---------- gratuit ---------- */
 .free { max-width: 1120px; margin: clamp(64px, 10vw, 120px) auto 0; display: grid; gap: 22px 56px; align-items: center; grid-template-columns: minmax(0, 1fr); }

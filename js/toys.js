@@ -770,5 +770,349 @@
     st.classList.add('still'); deal(); requestAnimationFrame(function () { requestAnimationFrame(function () { st.classList.remove('still'); }); });
   }
 
-  [piano, yams, ttt, solitaire, c4, paires, dames, sudoku, mot, hockey, billes, mines].forEach(function (f) { try { f(); } catch (e) { if (window.console) console.error(e); } });
+  /* ---------- Outils communs aux jouets dessinés (canvas) ---------- */
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  /* Ajuste le canvas à sa boîte. f.k = pixels par unité, f.LH = hauteur en unités (la largeur vaut toujours LW). */
+  function fit(cv, LW, after) {
+    var f = { k: 1, LH: LW };
+    function size() {
+      var b = cv.getBoundingClientRect(); if (!b.width) return;
+      var d = Math.min(2, window.devicePixelRatio || 1);
+      cv.width = Math.round(b.width * d); cv.height = Math.round(b.height * d);
+      f.k = cv.width / LW; f.LH = LW * b.height / b.width; if (after) after();
+    }
+    if ('ResizeObserver' in window) new ResizeObserver(size).observe(cv); else window.addEventListener('resize', size);
+    f.size = size; return f;
+  }
+  function seen(st, cb) {
+    if ('IntersectionObserver' in window) new IntersectionObserver(function (en) { cb(en[0].isIntersecting); }, { threshold: 0 }).observe(st);
+  }
+  function shade(ctx, x, y, r, c1, c2, c3) {
+    var g = ctx.createRadialGradient(x - r * .35, y - r * .4, r * .1, x, y, r);
+    g.addColorStop(0, c1); g.addColorStop(.55, c2); g.addColorStop(1, c3);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill();
+  }
+
+  /* ---------- Tour de blocs ---------- */
+  function tour() {
+    var st = stage('tour'); if (!st) return;
+    var btn = el('button', 'tap'), cv = el('canvas'), say_ = chipper(st), ctx = cv.getContext('2d');
+    btn.type = 'button'; btn.setAttribute('aria-label', 'Tour de blocs : poser le bloc'); cv.setAttribute('aria-hidden', 'true');
+    btn.appendChild(cv); st.appendChild(btn);
+    var LW = 200, BH = 17, BASE = 112, f = fit(cv, LW, draw);
+    var stack = [], cur = null, dir = 1, speed = 90, falls = [], state = 'wait', streak = 0, cam = 0, visible = true, running = false, last = 0, timer;
+    function ground() { return f.LH - 64; }
+    function spawn() {
+      var top = stack[stack.length - 1];
+      dir = stack.length % 2 ? 1 : -1; speed = Math.min(86 + stack.length * 6.5, 270);
+      cur = { x: dir > 0 ? -top.w * .7 : LW - top.w * .3, w: top.w };
+    }
+    function reset() { stack = [{ x: (LW - BASE) / 2, w: BASE }]; falls = []; streak = 0; cam = 0; spawn(); state = 'wait'; say_('Touche pour jouer'); draw(); }
+    function count() { return stack.length - 1; }
+    function lose() {
+      var n = count(); state = 'over';
+      say_('Perdu ! ' + n + (n > 1 ? ' blocs' : ' bloc')); say('Tour de blocs : partie finie avec ' + n + (n > 1 ? ' blocs.' : ' bloc.'));
+      clearTimeout(timer); timer = setTimeout(reset, 2600);
+    }
+    function drop() {
+      var top = stack[stack.length - 1], d = cur.x - top.x, ad = Math.abs(d), y = stack.length;
+      if (ad >= top.w) { falls.push({ x: cur.x, w: cur.w, lv: y, dy: 0, vy: 0, vx: dir * 30 }); cur = null; lose(); return; }
+      if (ad < 4.5) {
+        cur.x = top.x; streak++;
+        if (streak >= 4 && cur.w < BASE) { var g = Math.min(8, BASE - cur.w); cur.w += g; cur.x = clamp(cur.x - g / 2, 0, LW - cur.w); }
+        say_('Parfait !', 900);
+      } else {
+        streak = 0;
+        falls.push({ x: d > 0 ? top.x + top.w : cur.x, w: ad, lv: y, dy: 0, vy: 0, vx: d > 0 ? 40 : -40 });
+        cur.x = Math.max(cur.x, top.x); cur.w = top.w - ad;
+      }
+      stack.push({ x: cur.x, w: cur.w }); spawn();
+    }
+    function block(x, y, w, i) {
+      var h = (205 + i * 13) % 360;
+      ctx.fillStyle = 'hsl(' + h + ',72%,62%)'; ctx.fillRect(x, y, w, BH);
+      ctx.fillStyle = 'hsl(' + h + ',85%,78%)'; ctx.fillRect(x, y, w, 3.5);
+      ctx.fillStyle = 'hsl(' + h + ',60%,44%)'; ctx.fillRect(x, y + BH - 3.5, w, 3.5);
+    }
+    function draw() {
+      if (!stack.length) return;
+      var G = ground(), i, s;
+      ctx.setTransform(f.k, 0, 0, f.k, 0, 0); ctx.clearRect(0, 0, LW, f.LH);
+      ctx.fillStyle = 'rgba(255,244,214,.9)'; ctx.textAlign = 'center'; ctx.font = '400 44px "Paytone One", "Arial Rounded MT Bold", system-ui, sans-serif';
+      ctx.fillText(String(count()), LW / 2, 62);
+      ctx.fillStyle = 'rgba(10,8,30,.55)'; ctx.fillRect(0, G + cam, LW, f.LH);
+      for (i = 0; i < stack.length; i++) { s = stack[i]; block(s.x, G - (i + 1) * BH + cam, s.w, i); }
+      if (cur) block(cur.x, G - (stack.length + 1) * BH + cam, cur.w, stack.length);
+      for (i = 0; i < falls.length; i++) { s = falls[i]; ctx.globalAlpha = .85; block(s.x, G - (s.lv + 1) * BH + cam + s.dy, s.w, s.lv); ctx.globalAlpha = 1; }
+    }
+    function tick(t) {
+      var dt = Math.min(.04, (t - last) / 1000 || 0), i, s, room, goal; last = t;
+      if (state === 'play' && cur) {
+        cur.x += dir * speed * dt;
+        if (cur.x > LW - cur.w + 26) { cur.x = LW - cur.w + 26; dir = -1; }
+        if (cur.x < -26) { cur.x = -26; dir = 1; }
+      }
+      for (i = falls.length - 1; i >= 0; i--) { s = falls[i]; s.vy += 900 * dt; s.dy += s.vy * dt; s.x += s.vx * dt; if (s.dy > f.LH) falls.splice(i, 1); }
+      room = Math.floor((ground() - f.LH * .36) / BH); goal = Math.max(0, (stack.length + 1 - room) * BH); cam += (goal - cam) * Math.min(1, dt * 8);
+      draw();
+      if (visible && (state === 'play' || falls.length)) requestAnimationFrame(tick); else running = false;
+    }
+    function wake() { if (!running && visible) { running = true; last = performance.now(); requestAnimationFrame(tick); } }
+    btn.addEventListener('click', function () {
+      if (state === 'wait') { state = 'play'; say_(''); wake(); }
+      else if (state === 'play') { drop(); wake(); }
+    });
+    seen(st, function (v) { visible = v; if (v) { f.size(); wake(); } });
+    f.size(); reset();
+  }
+
+  /* ---------- Flipper ---------- */
+  function flipper() {
+    var st = stage('flipper'); if (!st) return;
+    var cv = el('canvas'), L = el('button', 'flip l'), R = el('button', 'flip r'), say_ = chipper(st), ctx = cv.getContext('2d');
+    cv.setAttribute('aria-hidden', 'true'); L.type = R.type = 'button';
+    L.setAttribute('aria-label', 'Flipper : batte gauche'); R.setAttribute('aria-label', 'Flipper : batte droite');
+    st.appendChild(cv); st.appendChild(L); st.appendChild(R);
+    var LW = 200, FL = 44, FR = 5, UP = -.52, DOWN = .5, H = 1 / 240, f = fit(cv, LW, draw);
+    var b = null, flips = [{ a: DOWN, t: DOWN, w: 0, s: 1, px: 50 }, { a: DOWN, t: DOWN, w: 0, s: -1, px: 150 }];
+    var bumps = [{ x: 56, y: 122, r: 15, f: 0 }, { x: 144, y: 122, r: 15, f: 0 }, { x: 100, y: 186, r: 15, f: 0 }];
+    var state = 'wait', score = 0, left = 3, visible = true, running = false, last = 0, acc = 0, still = 0, timer;
+    function py() { return f.LH - 84; }
+    function tip(fl) { return { x: fl.px + fl.s * FL * Math.cos(fl.a), y: py() + FL * Math.sin(fl.a) }; }
+    function launch() { b = { x: 100, y: 34, vx: (Math.random() - .5) * 190, vy: 0, r: 7 }; still = 0; }
+    function seg(ax, ay, bx, by, rad, wx, wy, w, e) {
+      var dx = bx - ax, dy = by - ay, t = clamp(((b.x - ax) * dx + (b.y - ay) * dy) / (dx * dx + dy * dy), 0, 1);
+      var px = ax + dx * t, qy = ay + dy * t, nx = b.x - px, ny = b.y - qy, d = Math.hypot(nx, ny), min = b.r + rad;
+      if (d >= min || d < 1e-6) return;
+      nx /= d; ny /= d; b.x = px + nx * min; b.y = qy + ny * min;
+      var sx = -w * (qy - wy), sy = w * (px - wx), rx = b.vx - sx, ry = b.vy - sy, vn = rx * nx + ry * ny;
+      if (vn < 0) { rx -= (1 + e) * vn * nx; ry -= (1 + e) * vn * ny; b.vx = rx + sx; b.vy = ry + sy; }
+    }
+    function step() {
+      var Y = py(), i, fl, p, prev, dx, dy, d, vn, sp, m;
+      for (i = 0; i < 2; i++) { fl = flips[i]; prev = fl.a; fl.a += clamp(fl.t - fl.a, -24 * H, 24 * H); fl.w = (fl.a - prev) / H; }
+      for (i = 0; i < 3; i++) if (bumps[i].f > 0) bumps[i].f -= H;
+      if (!b) return;
+      b.vy += 880 * H; b.x += b.vx * H; b.y += b.vy * H;
+      if (b.y < 100) {                                   /* voûte arrondie en haut */
+        dx = b.x - 100; dy = b.y - 100; d = Math.hypot(dx, dy);
+        if (d > 100 - b.r) { dx /= d; dy /= d; b.x = 100 + dx * (100 - b.r); b.y = 100 + dy * (100 - b.r); vn = b.vx * dx + b.vy * dy; if (vn > 0) { b.vx -= 1.6 * vn * dx; b.vy -= 1.6 * vn * dy; } }
+      } else {
+        if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx) * .6; }
+        if (b.x > LW - b.r) { b.x = LW - b.r; b.vx = -Math.abs(b.vx) * .6; }
+      }
+      for (i = 0; i < 3; i++) {
+        m = bumps[i]; dx = b.x - m.x; dy = b.y - m.y; d = Math.hypot(dx, dy);
+        if (d < m.r + b.r && d > 1e-6) {
+          dx /= d; dy /= d; b.x = m.x + dx * (m.r + b.r); b.y = m.y + dy * (m.r + b.r);
+          vn = b.vx * dx + b.vy * dy; if (vn < 0) { b.vx -= 2 * vn * dx; b.vy -= 2 * vn * dy; }
+          sp = Math.max(Math.hypot(b.vx, b.vy), 430); b.vx = dx * sp * .9 + b.vx * .1; b.vy = dy * sp * .9 + b.vy * .1;
+          if (m.f <= 0) score += 10; m.f = .16;
+        }
+      }
+      seg(0, Y - 66, 46, Y - 5, 4, 0, 0, 0, .35); seg(LW, Y - 66, LW - 46, Y - 5, 4, 0, 0, 0, .35);
+      for (i = 0; i < 2; i++) { fl = flips[i]; p = tip(fl); seg(fl.px, Y, p.x, p.y, FR, fl.px, Y, fl.w * fl.s, .35); }
+      sp = Math.hypot(b.vx, b.vy); if (sp > 880) { b.vx *= 880 / sp; b.vy *= 880 / sp; }
+      if (sp < 14) { still += H; if (still > 1.6) { b.vx += (Math.random() - .5) * 240; b.vy -= 160; still = 0; } } else still = 0;
+      if (b.y > f.LH + 24) lost();
+    }
+    function lost() {
+      b = null; left--;
+      if (left > 0) { say_(left > 1 ? 'Encore ' + left + ' billes' : 'Dernière bille', 1100); timer = setTimeout(function () { if (state === 'play') { launch(); wake(); } }, 900); }
+      else {
+        state = 'over'; say_('Score : ' + score); say('Flipper : partie finie, ' + score + ' points.');
+        timer = setTimeout(function () { state = 'wait'; score = 0; left = 3; say_('Touche en bas'); draw(); }, 2800);
+      }
+    }
+    function glow(c, n) { ctx.shadowColor = c; ctx.shadowBlur = n * f.k; }
+    function draw() {
+      var Y = py(), i, m, fl, p;
+      ctx.setTransform(f.k, 0, 0, f.k, 0, 0); ctx.clearRect(0, 0, LW, f.LH);
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      glow('#ff4fd8', 9); ctx.strokeStyle = '#ff7be3'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(1.5, Y - 66); ctx.lineTo(1.5, 100); ctx.arc(100, 100, 98.5, Math.PI, 0); ctx.lineTo(LW - 1.5, Y - 66); ctx.stroke();
+      ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(0, Y - 66); ctx.lineTo(46, Y - 5); ctx.moveTo(LW, Y - 66); ctx.lineTo(LW - 46, Y - 5); ctx.stroke();
+      for (i = 0; i < 3; i++) {
+        m = bumps[i]; glow(m.f > 0 ? '#fff' : '#ffd23f', m.f > 0 ? 18 : 10);
+        shade(ctx, m.x, m.y, m.r + (m.f > 0 ? 2 : 0), '#fff6c9', m.f > 0 ? '#ffe98a' : '#ffc933', '#c98a00');
+        ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(90,50,0,.55)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(m.x, m.y, m.r * .55, 0, 6.2832); ctx.stroke();
+      }
+      glow('#34e7ff', 10); ctx.strokeStyle = '#7df1ff'; ctx.lineWidth = FR * 2;
+      for (i = 0; i < 2; i++) { fl = flips[i]; p = tip(fl); ctx.beginPath(); ctx.moveTo(fl.px, Y); ctx.lineTo(p.x, p.y); ctx.stroke(); }
+      ctx.shadowBlur = 0;
+      if (b) { ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(b.x + 2, b.y + 3, b.r, 0, 6.2832); ctx.fill(); shade(ctx, b.x, b.y, b.r, '#ffffff', '#cfd6e4', '#6b7488'); }
+      ctx.fillStyle = '#fff4d6'; ctx.textAlign = 'center'; ctx.font = '400 22px "Paytone One", "Arial Rounded MT Bold", system-ui, sans-serif';
+      ctx.fillText(String(score), LW / 2, 62);
+      for (i = 0; i < 3; i++) { ctx.fillStyle = i < left - (b ? 1 : 0) ? '#cfd6e4' : 'rgba(255,255,255,.18)'; ctx.beginPath(); ctx.arc(LW / 2 - 12 + i * 12, 78, 3.6, 0, 6.2832); ctx.fill(); }
+    }
+    function busy() { return !!b || flips[0].a !== flips[0].t || flips[1].a !== flips[1].t || bumps.some(function (m) { return m.f > 0; }); }
+    function tick(t) {
+      acc += Math.min(.05, (t - last) / 1000 || 0); last = t;
+      while (acc >= H) { step(); acc -= H; }
+      draw();
+      if (visible && busy()) requestAnimationFrame(tick); else running = false;
+    }
+    function wake() { if (!running && visible) { running = true; last = performance.now(); acc = 0; requestAnimationFrame(tick); } }
+    function press(i, on) {
+      flips[i].t = on ? UP : DOWN;
+      if (on && state === 'wait') { state = 'play'; score = 0; left = 3; say_(''); launch(); }
+      wake();
+    }
+    [L, R].forEach(function (bt, i) {
+      bt.addEventListener('pointerdown', function (e) { e.preventDefault(); try { bt.setPointerCapture(e.pointerId); } catch (x) {} press(i, true); });
+      ['pointerup', 'pointercancel', 'lostpointercapture', 'blur'].forEach(function (n) { bt.addEventListener(n, function () { press(i, false); }); });
+      bt.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+      bt.addEventListener('keydown', function (e) {
+        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!e.repeat) press(i, true); }
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); if (!e.repeat) press(e.key === 'ArrowLeft' ? 0 : 1, true); }
+      });
+      bt.addEventListener('keyup', function (e) {
+        if (e.key === ' ' || e.key === 'Enter') press(i, false);
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') press(e.key === 'ArrowLeft' ? 0 : 1, false);
+      });
+    });
+    seen(st, function (v) { visible = v; if (v) { f.size(); if (busy()) wake(); } });
+    f.size(); say_('Touche en bas'); draw();
+  }
+
+  /* ---------- Billard ---------- */
+  function billard() {
+    var st = stage('billard'); if (!st) return;
+    var cv = el('canvas'), info = el('p', 'pool-info'), again = el('button', 'mini', 'Rejouer'), say_ = chipper(st), ctx = cv.getContext('2d');
+    cv.tabIndex = 0; cv.setAttribute('role', 'application');
+    cv.setAttribute('aria-label', 'Billard : tire en arrière puis lâche pour frapper la blanche. Au clavier : flèches gauche et droite pour viser, haut et bas pour la force, Espace pour tirer.');
+    again.type = 'button'; info.setAttribute('aria-hidden', 'true');
+    st.appendChild(cv); st.appendChild(info); st.appendChild(again);
+    var W = 400, HH = 200, M = 16, LW = W + 2 * M, BR = 7.5, H = 1 / 240, f = fit(cv, LW, draw);
+    var COLORS = [['#fff3b0', '#ffc933', '#b98300'], ['#b9d2ff', '#2f6fe4', '#17389a'], ['#ffb3ab', '#e8473b', '#9b1c13'], ['#d9c2ff', '#7a4bc8', '#44238a'], ['#ffd2a6', '#f0842c', '#a34d0c'], ['#6b6f76', '#22262b', '#000']];
+    var POCKETS = [[0, 0, 15], [200, -4, 13], [400, 0, 15], [0, 200, 15], [200, 204, 13], [400, 200, 15]];
+    var balls = [], cue = null, potted = 0, shots = 0, aim = 0, power = 0, drag = null, kb = false, scratch = false, visible = true, running = false, last = 0, acc = 0, done = false, timer;
+    function rack() {
+      var d = BR * 2 + .6, s = d * .866, i = 0;
+      balls = []; potted = 0; shots = 0; aim = 0; power = 0; drag = null; scratch = false; done = false; clearTimeout(timer);
+      cue = { x: 100, y: 100, vx: 0, vy: 0, cue: true }; balls.push(cue);
+      [[0, 0], [1, -.5], [1, .5], [2, -1], [2, 0], [2, 1]].forEach(function (p) { balls.push({ x: 285 + p[0] * s, y: 100 + p[1] * d, vx: 0, vy: 0, c: COLORS[i++] }); });
+      text(); draw();
+    }
+    function text() { info.innerHTML = '<b>' + potted + '/6</b> billes<br><b>' + shots + '</b> ' + (shots > 1 ? 'coups' : 'coup'); }
+    function moving() { return balls.some(function (o) { return o.vx || o.vy; }); }
+    function step() {
+      var i, j, o, p, dx, dy, d, sp, nx, ny, vn, q;
+      for (i = balls.length - 1; i >= 0; i--) {
+        o = balls[i]; if (!o.vx && !o.vy) continue;
+        o.x += o.vx * H; o.y += o.vy * H;
+        sp = Math.hypot(o.vx, o.vy); q = Math.max(0, sp - (55 + sp * .85) * H);
+        if (q < 5) { o.vx = o.vy = 0; } else { o.vx *= q / sp; o.vy *= q / sp; }
+        for (j = 0, p = null; j < 6; j++) if (Math.hypot(o.x - POCKETS[j][0], o.y - POCKETS[j][1]) < POCKETS[j][2]) p = POCKETS[j];
+        if (p) {
+          if (o.cue) { scratch = true; o.vx = o.vy = 0; o.x = -99; o.y = -99; o.out = true; }
+          else { balls.splice(i, 1); potted++; text(); }
+          continue;
+        }
+        if (o.x < BR) { o.x = BR; o.vx = Math.abs(o.vx) * .78; } else if (o.x > W - BR) { o.x = W - BR; o.vx = -Math.abs(o.vx) * .78; }
+        if (o.y < BR) { o.y = BR; o.vy = Math.abs(o.vy) * .78; } else if (o.y > HH - BR) { o.y = HH - BR; o.vy = -Math.abs(o.vy) * .78; }
+      }
+      for (i = 0; i < balls.length; i++) for (j = i + 1; j < balls.length; j++) {
+        o = balls[i]; p = balls[j]; if (o.out || p.out) continue;
+        dx = p.x - o.x; dy = p.y - o.y; d = Math.hypot(dx, dy);
+        if (d < BR * 2 && d > 1e-6) {
+          nx = dx / d; ny = dy / d; q = (BR * 2 - d) / 2; o.x -= nx * q; o.y -= ny * q; p.x += nx * q; p.y += ny * q;
+          vn = (p.vx - o.vx) * nx + (p.vy - o.vy) * ny;
+          if (vn < 0) { vn *= .98; o.vx += vn * nx; o.vy += vn * ny; p.vx -= vn * nx; p.vy -= vn * ny; }
+        }
+      }
+    }
+    function settle() {
+      if (scratch) {
+        scratch = false; cue.out = false; cue.x = 100; cue.y = 100;
+        while (balls.some(function (o) { return o !== cue && Math.hypot(o.x - cue.x, o.y - cue.y) < BR * 2 + 1; })) cue.x += BR * 2;
+        say_('Blanche dans le trou !', 1600); say('Billard : la blanche est tombée, elle revient sur la table.');
+      }
+      if (potted >= 6 && !done) {
+        done = true; say_('Bravo ! ' + shots + (shots > 1 ? ' coups' : ' coup')); say('Billard : toutes les billes sont rentrées en ' + shots + ' coups.');
+        timer = setTimeout(function () { say_(''); rack(); }, 3000);
+      }
+    }
+    function reach() {                                   /* distance jusqu'au premier obstacle sur la ligne de visée */
+      var cx = Math.cos(aim), cy = Math.sin(aim), t = 1e9, i, o, ox, oy, pr, pp;
+      if (cx > 0) t = Math.min(t, (W - BR - cue.x) / cx); else if (cx < 0) t = Math.min(t, (BR - cue.x) / cx);
+      if (cy > 0) t = Math.min(t, (HH - BR - cue.y) / cy); else if (cy < 0) t = Math.min(t, (BR - cue.y) / cy);
+      for (i = 0; i < balls.length; i++) {
+        o = balls[i]; if (o === cue) continue;
+        ox = o.x - cue.x; oy = o.y - cue.y; pr = ox * cx + oy * cy; pp = ox * ox + oy * oy - pr * pr;
+        if (pr > 0 && pp < BR * BR * 4) t = Math.min(t, pr - Math.sqrt(BR * BR * 4 - pp));
+      }
+      return Math.max(0, t);
+    }
+    function draw() {
+      var i, o, t, cx, cy, back;
+      ctx.setTransform(f.k, 0, 0, f.k, 0, 0); ctx.clearRect(0, 0, LW, f.LH);
+      ctx.fillStyle = '#7a4a22'; rr(0, 0, LW, HH + 2 * M, 14); ctx.fill();
+      ctx.fillStyle = '#5c3414'; rr(3, 3, LW - 6, HH + 2 * M - 6, 12); ctx.fill();
+      ctx.fillStyle = '#126b46'; rr(M - 6, M - 6, W + 12, HH + 12, 6); ctx.fill();
+      var g = ctx.createRadialGradient(M + W / 2, M + HH / 2, 20, M + W / 2, M + HH / 2, W * .6); g.addColorStop(0, '#27a06a'); g.addColorStop(1, '#17794f');
+      ctx.fillStyle = g; ctx.fillRect(M, M, W, HH);
+      ctx.translate(M, M);
+      ctx.strokeStyle = 'rgba(255,255,255,.16)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(100, 0); ctx.lineTo(100, HH); ctx.stroke();
+      ctx.fillStyle = '#07130d'; for (i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(POCKETS[i][0], POCKETS[i][1], POCKETS[i][2] - 3, 0, 6.2832); ctx.fill(); }
+      if (cue && !cue.out && !moving() && !done && (drag || kb) && power > 0) {
+        cx = Math.cos(aim); cy = Math.sin(aim); t = reach();
+        ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 1.6; ctx.setLineDash([4, 5]);
+        ctx.beginPath(); ctx.moveTo(cue.x + cx * BR, cue.y + cy * BR); ctx.lineTo(cue.x + cx * t, cue.y + cy * t); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(cue.x + cx * t, cue.y + cy * t, BR, 0, 6.2832); ctx.stroke();
+        back = BR + 5 + power * 34; ctx.lineCap = 'round';
+        ctx.strokeStyle = '#3b2412'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(cue.x - cx * (back + 40), cue.y - cy * (back + 40)); ctx.lineTo(cue.x - cx * (back + 170), cue.y - cy * (back + 170)); ctx.stroke();
+        ctx.strokeStyle = '#e9c98a'; ctx.lineWidth = 3.4; ctx.beginPath(); ctx.moveTo(cue.x - cx * back, cue.y - cy * back); ctx.lineTo(cue.x - cx * (back + 120), cue.y - cy * (back + 120)); ctx.stroke();
+        ctx.strokeStyle = '#bfe3ff'; ctx.lineWidth = 3.4; ctx.beginPath(); ctx.moveTo(cue.x - cx * back, cue.y - cy * back); ctx.lineTo(cue.x - cx * (back + 4), cue.y - cy * (back + 4)); ctx.stroke(); ctx.lineCap = 'butt';
+      }
+      for (i = 0; i < balls.length; i++) {
+        o = balls[i]; if (o.out) continue;
+        ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.arc(o.x + 1.8, o.y + 2.6, BR, 0, 6.2832); ctx.fill();
+        if (o.cue) shade(ctx, o.x, o.y, BR, '#ffffff', '#f1ede2', '#b9b2a2'); else shade(ctx, o.x, o.y, BR, o.c[0], o.c[1], o.c[2]);
+      }
+    }
+    function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+    function tick(t) {
+      var was = moving();
+      acc += Math.min(.05, (t - last) / 1000 || 0); last = t;
+      while (acc >= H) { if (moving()) step(); acc -= H; }
+      if (was && !moving()) settle();
+      draw();
+      if (visible && (moving() || drag)) requestAnimationFrame(tick); else running = false;
+    }
+    function wake() { if (!running && visible) { running = true; last = performance.now(); acc = 0; requestAnimationFrame(tick); } }
+    function shoot() {
+      if (moving() || done || cue.out || power <= 0) return;
+      cue.vx = Math.cos(aim) * (150 + power * 800); cue.vy = Math.sin(aim) * (150 + power * 800);
+      shots++; text(); power = 0; say_(''); wake();
+    }
+    function pt(e) { var b = cv.getBoundingClientRect(); return { x: (e.clientX - b.left) / b.width * LW, y: (e.clientY - b.top) / b.width * LW }; }
+    cv.addEventListener('pointerdown', function (e) {
+      if (moving() || done) return;
+      e.preventDefault(); drag = pt(e); power = 0; kb = false; try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+      wake();
+    });
+    cv.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var p = pt(e), dx = p.x - drag.x, dy = p.y - drag.y, d = Math.hypot(dx, dy);
+      if (d > 7) { aim = Math.atan2(-dy, -dx); power = clamp((d - 7) / 95, .02, 1); } else power = 0;
+    });
+    function up() { if (!drag) return; drag = null; if (power > 0) shoot(); else draw(); }
+    cv.addEventListener('pointerup', up);
+    cv.addEventListener('pointercancel', function () { drag = null; power = 0; draw(); });
+    cv.addEventListener('keydown', function (e) {
+      var k = e.key;
+      if (k === 'ArrowLeft' || k === 'ArrowRight') aim += (k === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? .01 : .05);
+      else if (k === 'ArrowUp' || k === 'ArrowDown') power = clamp((power || .5) + (k === 'ArrowUp' ? .1 : -.1), .1, 1);
+      else if (k === ' ' || k === 'Enter') { e.preventDefault(); if (!power) power = .5; kb = true; shoot(); power = .5; draw(); return; }
+      else return;
+      e.preventDefault(); kb = true; if (!power) power = .5; draw();
+    });
+    cv.addEventListener('blur', function () { if (kb) { kb = false; power = 0; draw(); } });
+    again.addEventListener('click', function () { say_(''); rack(); say('Billard : nouvelle partie.'); });
+    seen(st, function (v) { visible = v; if (v) { f.size(); if (moving()) wake(); } });
+    f.size(); rack(); say_('Tire en arrière et lâche', 4200);
+  }
+
+  [piano, yams, ttt, solitaire, c4, paires, dames, sudoku, mot, hockey, billes, flipper, tour, billard, mines].forEach(function (f) { try { f(); } catch (e) { if (window.console) console.error(e); } });
 })();
