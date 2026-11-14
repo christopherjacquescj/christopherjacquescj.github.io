@@ -381,7 +381,9 @@ button { font: inherit; color: inherit; }
 .mines .mini[aria-pressed="true"] { background: var(--red); color: #fff; }
 
 /* ---------- Flipper ---------- */
-.toy.flipper { --bg: #170f33; --on: #fff4d6; background: radial-gradient(120% 70% at 50% 18%, #35207a, #170f33 60%, #0c0720); }
+.toy.flipper { --bg: #5a3418; --on: #fff4d6; background: linear-gradient(90deg, #4f2c13, #7c4a23 50%, #4a2811); }
+.flipper .name { padding: .45em .85em; border-radius: 999px; background: #0d0a26; color: #fff4d6; left: calc(var(--cell) * .05); bottom: calc(var(--cell) * .045); box-shadow: 0 3px 0 rgba(0, 0, 0, .3); }
+.flipper .chip { font-size: calc(var(--u) * .06); white-space: nowrap; }
 .flipper canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .flipper .flip { position: absolute; bottom: 0; width: 50%; height: 46%; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .flipper .flip.l { left: 0; } .flipper .flip.r { right: 0; }
