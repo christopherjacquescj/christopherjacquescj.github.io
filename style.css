@@ -382,7 +382,7 @@ button { font: inherit; color: inherit; }
 
 /* ---------- Flipper ---------- */
 .toy.flipper { --bg: #5a3418; --on: #fff4d6; background: linear-gradient(90deg, #4f2c13, #7c4a23 50%, #4a2811); }
-.flipper .name { padding: .45em .85em; border-radius: 999px; background: #0d0a26; color: #fff4d6; left: calc(var(--cell) * .05); bottom: calc(var(--cell) * .045); box-shadow: 0 3px 0 rgba(0, 0, 0, .3); }
+.flipper .name, .bowling .name { padding: .45em .85em; border-radius: 999px; background: #0d0a26; color: #fff4d6; left: calc(var(--cell) * .05); bottom: calc(var(--cell) * .045); box-shadow: 0 3px 0 rgba(0, 0, 0, .3); }
 .flipper .chip { font-size: calc(var(--u) * .06); white-space: nowrap; }
 .flipper canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .flipper .flip { position: absolute; bottom: 0; width: 50%; height: 46%; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
@@ -391,15 +391,39 @@ button { font: inherit; color: inherit; }
 
 /* ---------- Tour de blocs ---------- */
 .toy.tour { --bg: #2a2f6e; --on: #fff4d6; background: linear-gradient(#1c2260, #45358a 55%, #b0577e); }
-.tour .tap { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; touch-action: manipulation; }
-.tour .tap:focus-visible { outline-offset: -6px; border-radius: calc(var(--u) * .1); }
-.tour canvas { width: 100%; height: 100%; }
+.tour .tap, .flechettes .tap { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; touch-action: manipulation; }
+.tour .tap:focus-visible, .flechettes .tap:focus-visible { outline-offset: -6px; border-radius: calc(var(--u) * .1); }
+.tour canvas, .flechettes canvas { width: 100%; height: 100%; }
 
 /* ---------- Billard ---------- */
 .toy.billard { --bg: #3b2414; --on: #fff4d6; background: var(--grain), linear-gradient(#4a2e1a, #2a180c); }
 .billard canvas { position: absolute; left: 3%; top: 6%; height: 74%; aspect-ratio: 432 / 232; cursor: crosshair; touch-action: none; border-radius: calc(var(--u) * .045); box-shadow: 0 8px 12px rgba(0, 0, 0, .45); }
 .billard .pool-info { position: absolute; right: 4%; top: 9%; margin: 0; text-align: right; font: 400 calc(var(--u) * .07)/1.5 var(--display); color: var(--on); opacity: .92; }
 .billard .pool-info b { font-weight: 400; font-size: 1.6em; color: var(--yellow); }
+
+/* ---------- Échecs ---------- */
+.toy.echecs { --bg: #3f4a5a; --on: #fff4d6; grid-column: span 2; grid-row: span 2; background: var(--grain), linear-gradient(#55657a, #2b3441); }
+.echecs .board { position: absolute; left: 50%; top: 4.5%; width: 78%; aspect-ratio: 1; transform: translateX(-50%); display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); box-shadow: 0 0 0 calc(var(--u) * .028) #2a1c10, 0 calc(var(--u) * .07) calc(var(--u) * .09) rgba(0, 0, 0, .5); }
+.echecs .sq { position: relative; margin: 0; padding: 0; border: 0; border-radius: 0; background: #eed7a8; cursor: pointer; display: grid; place-items: center; min-width: 0; min-height: 0; touch-action: manipulation; }
+.echecs .sq.d { background: #a9703c; }
+.echecs .sq svg { width: 88%; height: 88%; pointer-events: none; stroke-width: 1.7; stroke-linejoin: round; }
+.echecs .sq svg.w { fill: #fffaf0; stroke: #2a1809; }
+.echecs .sq svg.b { fill: #2b2420; stroke: #0b0807; }
+.echecs .sq.last { box-shadow: inset 0 0 0 99px rgba(255, 214, 79, .38); }
+.echecs .sq.chk { box-shadow: inset 0 0 0 99px rgba(232, 71, 59, .62); }
+.echecs .sq.sel { box-shadow: inset 0 0 0 99px rgba(94, 201, 120, .62); }
+.echecs .sq.to::after { content: ""; position: absolute; width: 32%; height: 32%; border-radius: 50%; background: rgba(20, 70, 35, .6); }
+.echecs .sq.to.cap::after { width: 90%; height: 90%; box-sizing: border-box; background: none; border: calc(var(--u) * .014) solid rgba(200, 40, 30, .85); }
+.echecs .sq:focus-visible { outline-offset: -3px; z-index: 1; }
+
+/* ---------- Bowling ---------- */
+.toy.bowling { --bg: #141a3a; --on: #fff4d6; background: linear-gradient(#231a52, #0f1330); }
+.bowling canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.bowling .zone { position: absolute; left: 0; bottom: 0; width: 100%; height: 48%; margin: 0; padding: 0; border: 0; background: none; cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.bowling .zone:focus-visible { outline-offset: -6px; border-radius: calc(var(--u) * .08); }
+
+/* ---------- Fléchettes ---------- */
+.toy.flechettes { --bg: #4a1f22; --on: #fff4d6; background: var(--grain), linear-gradient(#63292c, #2e1317); }
 
 /* ---------- la vignette « Sur iPhone et iPad » ---------- */
 .toy.get .stage { display: grid; place-items: center; padding-bottom: 10%; }
