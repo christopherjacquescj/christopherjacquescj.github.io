@@ -4,11 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Le Coffre à Jeux</title>
-    <meta name="description" content="Le Coffre à Jeux : 18 jeux classiques sur iPhone et iPad, dont les échecs, le bowling et les fléchettes.">
+    <meta name="description" content="Le Coffre à Jeux : 19 jeux sur iPhone et iPad, dont les échecs, le bowling, les fléchettes et une borne d’arcade.">
     <meta name="theme-color" content="#1b6b4b">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Le Coffre à Jeux">
-    <meta property="og:description" content="18 jeux classiques réunis dans une seule app, sur iPhone et iPad.">
+    <meta property="og:description" content="19 jeux réunis dans une seule app, sur iPhone et iPad.">
     <meta property="og:image" content="https://christopherjacquescj.github.io/og.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -16,7 +16,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="preload" href="fonts/paytone-one-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="style.css?v=9">
+    <link rel="stylesheet" href="style.css?v=10">
 </head>
 <body class="home">
     <header class="top">
@@ -27,7 +27,7 @@
         <section class="hero" aria-labelledby="titre">
             <div class="hero-copy">
                 <h1 id="titre">Le Coffre<br>à Jeux</h1>
-                <p class="lede">18 jeux classiques réunis dans une seule app, sur iPhone et iPad.</p>
+                <p class="lede">19 jeux réunis dans une seule app, sur iPhone et iPad.</p>
                 <p class="actions">
                     <a class="btn" href="#jeux">Essayer les jeux</a>
                     <button class="shake" type="button">Secouer le coffre</button>
@@ -43,7 +43,7 @@
 
         <div class="inside">
             <section class="chest" id="jeux" aria-labelledby="t-jeux">
-                <h2 id="t-jeux">18 jeux dans un seul coffre</h2>
+                <h2 id="t-jeux">19 jeux dans un seul coffre</h2>
                 <p class="sub">Touche les jouets pour essayer. Le vrai jeu est dans l’app.</p>
                 <div class="toys-wrap">
                     <div class="toys">
@@ -69,6 +69,7 @@
                         <article class="toy bowling tall" aria-labelledby="n-bowling"><h3 class="name" id="n-bowling">Bowling</h3><div class="stage" data-toy="bowling"></div></article>
                         <article class="toy flechettes tall" aria-labelledby="n-flechettes"><h3 class="name" id="n-flechettes">Fléchettes</h3><div class="stage" data-toy="flechettes"></div></article>
 
+                        <article class="toy arcade tall" aria-labelledby="n-arcade"><h3 class="name" id="n-arcade">Borne d’arcade</h3><div class="stage" data-toy="arcade"></div></article>
                         <article class="toy mines" aria-labelledby="n-mines"><h3 class="name" id="n-mines">Démineur</h3><div class="stage" data-toy="mines"></div></article>
                         <article class="toy get" aria-labelledby="n-get">
                             <div class="stage">
@@ -116,6 +117,6 @@
     <p id="live" class="sr" aria-live="polite"></p>
     <script src="vendor/matter.min.js" defer></script>
     <script src="js/scene.js?v=1" defer></script>
-    <script src="js/toys.js?v=6" defer></script>
+    <script src="js/toys.js?v=7" defer></script>
 </body>
 </html>

@@ -866,6 +866,100 @@
     f.size(); reset();
   }
 
+  /* ---------- Borne d'arcade (« Astro Néon », comme dans l'app) ---------- */
+  function arcade() {
+    var st = stage('arcade'); if (!st) return;
+    var btn = el('button', 'tap'), cv = el('canvas'), say_ = chipper(st), ctx = cv.getContext('2d');
+    btn.type = 'button'; btn.setAttribute('aria-label', 'Borne d’arcade Astro Néon : touche pour jouer, glisse ou utilise les flèches pour déplacer le vaisseau');
+    cv.setAttribute('aria-hidden', 'true'); btn.appendChild(cv); st.appendChild(btn);
+    var box = st.getBoundingClientRect(), LW = box.width > box.height ? 330 : 200, f = fit(cv, LW, draw), CY = '#4df2ff', MA = '#ff4dbf', OR = '#ff9a3d', GR = '#c8c8d2';
+    var KIND = { drone: { c: MA, hp: 1, r: 9, pts: 100 }, chaser: { c: OR, hp: 1, r: 8.5, pts: 150 }, rock: { c: GR, hp: 3, r: 12, pts: 60 } };
+    var stars = [], ship, shots, foes, sparks, score, best = 0, lives, state = 'wait', t0, fire, next, hurt, keys = 0, visible = true, running = false, last = 0, timer, i;
+    for (i = 0; i < 26; i++) stars.push({ x: Math.random() * LW, y: Math.random(), v: .03 + Math.random() * .09, a: .25 + Math.random() * .6 });
+    function shipY() { return f.LH - 46; }
+    function reset() { ship = LW / 2; shots = []; foes = []; sparks = []; score = 0; lives = 3; t0 = 0; fire = 0; next = .6; hurt = 0; state = 'wait'; say_('Insère une pièce'); draw(); }
+    function spawn() {
+      var r = Math.random(), k = t0 > 12 && r < .22 ? 'rock' : (t0 > 5 && r < .5 ? 'chaser' : 'drone'), K = KIND[k];
+      foes.push({ k: k, x: 16 + Math.random() * (LW - 32), y: -14, hp: K.hp, ph: Math.random() * 6.28, x0: 0, hit: 0 });
+      foes[foes.length - 1].x0 = foes[foes.length - 1].x;
+    }
+    function boom(x, y, c, n) { for (var j = 0; j < n; j++) { var a = Math.random() * 6.28, v = 30 + Math.random() * 90; sparks.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: .45, c: c }); } }
+    function over() {
+      state = 'over'; best = Math.max(best, score); boom(ship, shipY(), CY, 22);
+      say_('Fini ! ' + score + ' points'); say('Borne d’arcade : partie finie avec ' + score + ' points.');
+      clearTimeout(timer); timer = setTimeout(reset, 3000);
+    }
+    function glow(c, b) { ctx.strokeStyle = c; ctx.shadowColor = c; ctx.shadowBlur = b * f.k; }
+    function draw() {
+      if (!stars.length || ship == null) return;
+      var H = f.LH, Y = shipY(), j, e, K, g;
+      ctx.setTransform(f.k, 0, 0, f.k, 0, 0); ctx.clearRect(0, 0, LW, H);
+      g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0a0624'); g.addColorStop(1, '#010006'); ctx.fillStyle = g; ctx.fillRect(0, 0, LW, H);
+      for (j = 0; j < stars.length; j++) { e = stars[j]; ctx.fillStyle = 'rgba(255,255,255,' + e.a + ')'; ctx.fillRect(e.x, e.y * H, 1.3, 1.3); }
+      ctx.lineWidth = 1.8; ctx.lineJoin = 'round';
+      glow(CY, 5); ctx.fillStyle = CY; for (j = 0; j < shots.length; j++) ctx.fillRect(shots[j].x - 1, shots[j].y - 6, 2, 9);
+      for (j = 0; j < foes.length; j++) {
+        e = foes[j]; K = KIND[e.k]; glow(e.hit > 0 ? '#fff' : K.c, 6); ctx.beginPath();
+        if (e.k === 'rock') { for (var a = 0; a < 7; a++) { var rr = K.r * (a % 2 ? .78 : 1), an = a / 7 * 6.2832 + e.ph; ctx[a ? 'lineTo' : 'moveTo'](e.x + Math.cos(an) * rr, e.y + Math.sin(an) * rr); } }
+        else if (e.k === 'chaser') { ctx.moveTo(e.x, e.y + K.r); ctx.lineTo(e.x - K.r * .8, e.y - K.r * .8); ctx.lineTo(e.x, e.y - K.r * .3); ctx.lineTo(e.x + K.r * .8, e.y - K.r * .8); }
+        else { ctx.moveTo(e.x, e.y - K.r); ctx.lineTo(e.x + K.r, e.y); ctx.lineTo(e.x, e.y + K.r); ctx.lineTo(e.x - K.r, e.y); }
+        ctx.closePath(); ctx.stroke();
+      }
+      for (j = 0; j < sparks.length; j++) { e = sparks[j]; ctx.globalAlpha = Math.max(0, e.t / .45); glow(e.c, 4); ctx.fillStyle = e.c; ctx.fillRect(e.x - 1, e.y - 1, 2, 2); }
+      ctx.globalAlpha = 1;
+      if (state !== 'over' && (hurt <= 0 || Math.floor(hurt * 12) % 2)) {
+        glow(CY, 8); ctx.beginPath(); ctx.moveTo(ship, Y - 11); ctx.lineTo(ship + 9, Y + 8); ctx.lineTo(ship, Y + 3); ctx.lineTo(ship - 9, Y + 8); ctx.closePath(); ctx.stroke();
+      }
+      ctx.shadowBlur = 0; ctx.textAlign = 'left'; ctx.font = '700 11px ui-monospace, Menlo, Consolas, monospace';
+      ctx.fillStyle = CY; ctx.fillText(String(score), 10, 18);
+      ctx.textAlign = 'right'; ctx.fillStyle = MA; ctx.fillText(lives > 0 ? new Array(lives + 1).join('♥') : '', LW - 10, 18);
+      if (best && state === 'wait') { ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText('RECORD ' + best, LW / 2, H * .42); }
+    }
+    function tick(t) {
+      var dt = Math.min(.04, (t - last) / 1000 || 0), H = f.LH, Y = shipY(), j, n, e, s, K; last = t;
+      for (j = 0; j < stars.length; j++) { e = stars[j]; e.y += e.v * dt * (state === 'play' ? 3 : 1); if (e.y > 1) { e.y = 0; e.x = Math.random() * LW; } }
+      if (state === 'play') {
+        t0 += dt; hurt -= dt; ship = clamp(ship + keys * 150 * dt, 10, LW - 10);
+        fire -= dt; if (fire <= 0) { fire = .2; shots.push({ x: ship, y: Y - 12 }); }
+        next -= dt; if (next <= 0) { next = Math.max(.28, .95 - t0 * .014); spawn(); }
+        for (j = shots.length - 1; j >= 0; j--) { shots[j].y -= 330 * dt; if (shots[j].y < -10) shots.splice(j, 1); }
+        for (j = foes.length - 1; j >= 0; j--) {
+          e = foes[j]; K = KIND[e.k]; e.hit -= dt; e.ph += dt * (e.k === 'rock' ? 1.2 : 3.2);
+          e.y += (e.k === 'rock' ? 46 : e.k === 'chaser' ? 78 : 58) * (1 + t0 * .008) * dt;
+          if (e.k === 'drone') e.x = clamp(e.x0 + Math.sin(e.ph) * 26, K.r, LW - K.r);
+          if (e.k === 'chaser') e.x += clamp(ship - e.x, -1, 1) * 46 * dt;
+          for (n = shots.length - 1; n >= 0; n--) {
+            s = shots[n];
+            if (Math.abs(s.x - e.x) < K.r && Math.abs(s.y - e.y) < K.r + 4) { shots.splice(n, 1); e.hp--; e.hit = .08; if (e.hp <= 0) break; }
+          }
+          if (e.hp <= 0) { score += K.pts; boom(e.x, e.y, K.c, 10); foes.splice(j, 1); continue; }
+          if (hurt <= 0 && Math.abs(e.x - ship) < K.r + 4 && Math.abs(e.y - Y) < K.r + 6) {
+            boom(e.x, e.y, K.c, 10); foes.splice(j, 1); lives--; hurt = 1.4;
+            if (lives <= 0) { over(); break; }
+            say_('Touché !', 800); continue;
+          }
+          if (e.y > H + 20) foes.splice(j, 1);
+        }
+      }
+      for (j = sparks.length - 1; j >= 0; j--) { e = sparks[j]; e.t -= dt; e.x += e.vx * dt; e.y += e.vy * dt; if (e.t <= 0) sparks.splice(j, 1); }
+      draw();
+      if (visible && (state === 'play' || sparks.length)) requestAnimationFrame(tick); else running = false;
+    }
+    function wake() { if (!running && visible) { running = true; last = performance.now(); requestAnimationFrame(tick); } }
+    function start() { if (state === 'wait') { state = 'play'; say_(''); wake(); } }
+    function aim(e) { var b = cv.getBoundingClientRect(); if (b.width) ship = clamp((e.clientX - b.left) / b.width * LW, 10, LW - 10); }
+    btn.addEventListener('click', start);
+    btn.addEventListener('pointerdown', function (e) { if (state === 'play') aim(e); });
+    btn.addEventListener('pointermove', function (e) { if (state === 'play' && (e.pointerType === 'mouse' || e.buttons || e.pressure > 0)) aim(e); });
+    btn.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft') { keys = -1; e.preventDefault(); } else if (e.key === 'ArrowRight') { keys = 1; e.preventDefault(); }
+    });
+    btn.addEventListener('keyup', function (e) { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') keys = 0; });
+    btn.addEventListener('blur', function () { keys = 0; });
+    seen(st, function (v) { visible = v; if (v) { f.size(); wake(); } });
+    f.size(); reset();
+  }
+
   /* ---------- Flipper (table « Nébuleuse », comme dans l'app) ---------- */
   function flipper() {
     var st = stage('flipper'); if (!st) return;
@@ -1647,5 +1741,5 @@
     f.size(); say_('Touche pour lancer'); draw();
   }
 
-  [piano, yams, ttt, solitaire, c4, paires, dames, sudoku, mot, hockey, billes, flipper, tour, billard, echecs, bowling, flechettes, mines].forEach(function (f) { try { f(); } catch (e) { if (window.console) console.error(e); } });
+  [piano, yams, ttt, solitaire, c4, paires, dames, sudoku, mot, hockey, billes, flipper, tour, billard, echecs, bowling, flechettes, arcade, mines].forEach(function (f) { try { f(); } catch (e) { if (window.console) console.error(e); } });
 })();
